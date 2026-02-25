@@ -2,7 +2,10 @@
 <p align="center">
   <img alt="ZenCrepesLogo" src="docs/zencrepes-logo.png" height="140" />
   <h2 align="center">GitHub Issues Notifications Action</h2>
-    <p align="center">A GitHub Action to collect notifications from GitHub Issues and prepare a message that can be then forwarded to messaging platforms like Slack. Aims at covering for the fact that Scheduled Reminders only work for Pull Requests, not Issues.</p>
+    <p align="center">A GitHub Action to collect notifications from GitHub Issues 
+    and prepare a message that can be then forwarded to messaging platforms like 
+    Slack. Aims at covering for the fact that Scheduled Reminders only work for 
+    Pull Requests, not Issues.</p>
 </p>
 
 ---
