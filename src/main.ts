@@ -1,5 +1,8 @@
 import * as core from '@actions/core'
-import { wait } from './wait.js'
+
+import { getConnectedUser } from './utils/github/getConnectedUser.js'
+import { getNotifications } from './utils/github/getNotifications.js'
+import { prepareMessage } from './utils/prepareMessage.js'
 
 /**
  * The main function for the action.
@@ -8,18 +11,22 @@ import { wait } from './wait.js'
  */
 export async function run(): Promise<void> {
   try {
-    const ms: string = core.getInput('milliseconds')
+    const inputGithubToken = core.getInput('github_token')
+    const inputReasons = core.getInput('reasons')
 
-    // Debug logs are only output if the `ACTIONS_STEP_DEBUG` secret is true
-    core.debug(`Waiting ${ms} milliseconds ...`)
+    // Simple API call to ensure the provided token is valid and display the associated username
+    await getConnectedUser({ githubToken: inputGithubToken })
 
-    // Log the current timestamp, wait, then log the new timestamp
-    core.debug(new Date().toTimeString())
-    await wait(parseInt(ms, 10))
-    core.debug(new Date().toTimeString())
+    // Retrieve the raw list of notifications from GitHub based on the provided reasons
+    const notifications = await getNotifications({
+      githubToken: inputGithubToken,
+      reasons: inputReasons.split(',').map((reason) => reason.trim())
+    })
 
-    // Set outputs for other workflow steps to use
-    core.setOutput('time', new Date().toTimeString())
+    const preparedMessage = prepareMessage(notifications)
+
+    core.setOutput('message', preparedMessage)
+    // core.setOutput('notifications', JSON.stringify(notifications))
   } catch (error) {
     // Fail the workflow run if an error occurs
     if (error instanceof Error) core.setFailed(error.message)
