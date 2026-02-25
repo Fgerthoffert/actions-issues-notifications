@@ -1,12 +1,12 @@
 name: Issues notifications
 description:
-  Retrieves the list of user notifications and forward it to your favorite
-  messaging platform
+  Generate a formatted message from GitHub notifications for forwarding to
+  messaging platforms
 author: Francois Gerthoffert
 
 branding:
-  icon: clock
-  color: orange
+  icon: activity
+  color: green
 
 inputs:
   github_token:
