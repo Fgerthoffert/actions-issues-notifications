@@ -19,7 +19,20 @@ inputs:
       https://docs.github.com/en/rest/activity/notifications?apiVersion=2022-11-28#about-github-notifications
       for the full list of reasons.
     default: 'mention,assign'
-    required: true
+    required: false
+  message_style:
+    description:
+      The style of the formatted message output. Use 'slack' for
+      Slack-compatible formatting with emojis and links, or 'raw' for plain
+      text.
+    default: 'slack'
+    required: false
+  max_notifications:
+    description:
+      Maximum number of notifications to include in the message. Set to 0 or
+      leave empty to include all notifications.
+    default: '0'
+    required: false
 
 outputs:
   message:

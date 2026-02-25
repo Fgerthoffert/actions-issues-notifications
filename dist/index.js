@@ -83972,6 +83972,68 @@ const convertApiUrlToBrowserUrl = (apiUrl) => {
 };
 
 /**
+ * Formats an ISO date string into a human-readable format.
+ *
+ * @param dateString - The ISO date string to format
+ * @returns A formatted date string or the original string if parsing fails
+ */
+const formatDate = (dateString) => {
+    try {
+        const date = new Date(dateString);
+        if (!isNaN(date.getTime())) {
+            return date.toLocaleString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+    }
+    catch {
+        // Keep original date string if parsing fails
+    }
+    return dateString;
+};
+
+/**
+ * Formats an array of GitHub notifications into a raw plain-text message.
+ *
+ * @param notifications - Array of GitHub notifications to format
+ * @returns A formatted plain-text string message
+ */
+const formatNotificationRaw = (notifications) => {
+    const header = `\n`;
+    const formattedNotifications = notifications
+        .map((notification, index) => {
+        try {
+            // Safely extract values with fallbacks
+            const repoUrl = convertApiUrlToBrowserUrl(notification?.repository?.url || '');
+            const reason = notification?.reason || 'unknown';
+            const updatedAt = notification?.updated_at || 'N/A';
+            const subjectTitle = notification?.subject?.title || 'No title';
+            const subjectType = notification?.subject?.type || 'Unknown';
+            const subjectUrl = convertApiUrlToBrowserUrl(notification?.subject?.url || notification?.url || '');
+            // Build the notification message (plain text, no special formatting)
+            const prefix = notifications.length > 1 ? `${index + 1}. ` : '';
+            const lines = [
+                `${prefix}${subjectType}(${reason}): ${subjectTitle} `,
+                subjectUrl ? `   URL: ${subjectUrl}` : null,
+                repoUrl ? `   Repository: ${repoUrl}` : null,
+                `   Date: ${formatDate(updatedAt)}`
+            ];
+            return lines.filter(Boolean).join('\n');
+        }
+        catch {
+            // If any error occurs processing this notification, return a safe fallback
+            return `${index + 1}. Error processing notification`;
+        }
+    })
+        .join('\n\n');
+    return header + formattedNotifications;
+};
+
+/**
  * Returns an emoji based on the notification subject type.
  *
  * @param type - The subject type (e.g., 'Issue', 'PullRequest', 'Release')
@@ -83991,16 +84053,16 @@ const getTypeEmoji = (type) => {
 };
 
 /**
- * Formats an array of GitHub notifications into a readable message for instant messaging platforms.
+ * Formats an array of GitHub notifications into a Slack-style message.
  *
  * @param notifications - Array of GitHub notifications to format
- * @returns A formatted string message listing all notifications
+ * @returns A formatted string message for Slack
  */
-const prepareMessage = (notifications) => {
-    if (!notifications || notifications.length === 0) {
-        return 'No notifications found.';
-    }
-    const header = `📬 *GitHub Notifications* (${notifications.length})\n\n`;
+const formatNotificationSlack = (notifications) => {
+    const hasMultiple = notifications.length > 1;
+    const header = hasMultiple
+        ? `📬 *GitHub Notifications* (${notifications.length})\n\n`
+        : '';
     const formattedNotifications = notifications
         .map((notification, index) => {
         try {
@@ -84012,45 +84074,47 @@ const prepareMessage = (notifications) => {
             const subjectTitle = notification?.subject?.title || 'No title';
             const subjectType = notification?.subject?.type || 'Unknown';
             const subjectUrl = convertApiUrlToBrowserUrl(notification?.subject?.url || notification?.url || '');
-            // Format the repository link
+            // Format the repository link (Slack style)
             const repoLink = repoUrl ? `<${repoUrl}|${repoFullName}>` : repoFullName;
-            // Format the subject link
+            // Format the subject link (Slack style)
             const subjectLink = subjectUrl
                 ? `<${subjectUrl}|${subjectTitle}>`
                 : subjectTitle;
-            // Format the date
-            let formattedDate = updatedAt;
-            try {
-                const date = new Date(updatedAt);
-                if (!isNaN(date.getTime())) {
-                    formattedDate = date.toLocaleString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                    });
-                }
-            }
-            catch {
-                // Keep original date string if parsing fails
-            }
             // Get emoji based on subject type
             const typeEmoji = getTypeEmoji(subjectType);
-            // Build the notification message
-            return (`${index + 1}. ${typeEmoji} *${subjectLink}*\n` +
-                `   📂 Repository: ${repoLink}\n` +
-                `   📌 Type: ${subjectType}\n` +
-                `   🔔 Reason: ${reason}\n` +
-                `   🕒 Updated: ${formattedDate}`);
+            // Build the notification message with proper Slack formatting
+            const prefix = hasMultiple ? `${index + 1}. ` : '';
+            return (`${prefix}${typeEmoji} *${subjectLink}*\n` +
+                `📂 Repository: ${repoLink}\n` +
+                `📌 Type: ${subjectType}\n` +
+                `🔔 Reason: ${reason}\n` +
+                `🕒 Updated: ${formatDate(updatedAt)}`);
         }
-        catch (error) {
+        catch {
             // If any error occurs processing this notification, return a safe fallback
-            return `${index + 1}. ⚠️  Error processing notification`;
+            const prefix = hasMultiple ? `${index + 1}. ` : '';
+            return `${prefix}⚠️ Error processing notification`;
         }
     })
         .join('\n\n');
     return header + formattedNotifications;
+};
+
+/**
+ * Formats an array of GitHub notifications into a message based on the specified style.
+ *
+ * @param notifications - Array of GitHub notifications to format
+ * @param style - The message style to use (defaults to 'slack')
+ * @returns A formatted string message
+ */
+const prepareMessage = (notifications, style = 'slack') => {
+    if (!notifications || notifications.length === 0) {
+        return 'No notifications found.';
+    }
+    if (style === 'slack') {
+        return formatNotificationSlack(notifications);
+    }
+    return formatNotificationRaw(notifications);
 };
 
 /**
@@ -84062,14 +84126,27 @@ async function run() {
     try {
         const inputGithubToken = getInput('github_token');
         const inputReasons = getInput('reasons');
+        const inputMessageStyle = getInput('message_style');
+        const inputMaxNotifications = parseInt(getInput('max_notifications') || '0', 10);
         // Simple API call to ensure the provided token is valid and display the associated username
         await getConnectedUser({ githubToken: inputGithubToken });
         // Retrieve the raw list of notifications from GitHub based on the provided reasons
-        const notifications = await getNotifications({
+        let notifications = await getNotifications({
             githubToken: inputGithubToken,
             reasons: inputReasons.split(',').map((reason) => reason.trim())
         });
-        const preparedMessage = prepareMessage(notifications);
+        if (notifications.length === 0) {
+            info('No notifications found, exiting the action');
+            return;
+        }
+        // Limit the number of notifications if max_notifications is set
+        // This is useful in setup where users might not want to receive more than X notifications at once.
+        if (inputMaxNotifications > 0 &&
+            notifications.length > inputMaxNotifications) {
+            info(`Limiting notifications from ${notifications.length} to ${inputMaxNotifications}`);
+            notifications = notifications.slice(0, inputMaxNotifications);
+        }
+        const preparedMessage = prepareMessage(notifications, inputMessageStyle);
         setOutput('message', preparedMessage);
         // core.setOutput('notifications', JSON.stringify(notifications))
     }
