@@ -1,17 +1,14 @@
 /**
  * Unit tests for the action's main functionality, src/main.ts
  *
- * To mock dependencies in ESM, you can create fixtures that export mock
- * functions and objects. For example, the core module is mocked in this test,
- * so that the actual '@actions/core' module is not imported.
+ * Note: These tests validate core error handling behavior.
+ * The main function's full workflow requires GitHub API mocking
+ * which is complex with ESM modules.
  */
 import { jest } from '@jest/globals'
 import * as core from '../__fixtures__/core.js'
-import { wait } from '../__fixtures__/wait.js'
 
-// Mocks should be declared before the module being tested is imported.
 jest.unstable_mockModule('@actions/core', () => core)
-jest.unstable_mockModule('../src/wait.js', () => ({ wait }))
 
 // The module being tested should be imported dynamically. This ensures that the
 // mocks are used in place of any actual dependencies.
@@ -19,44 +16,42 @@ const { run } = await import('../src/main.js')
 
 describe('main.ts', () => {
   beforeEach(() => {
-    // Set the action's inputs as return values from core.getInput().
-    core.getInput.mockImplementation(() => '500')
-
-    // Mock the wait function so that it does not actually wait.
-    wait.mockImplementation(() => Promise.resolve('done!'))
+    // Set up default input mocks
+    core.getInput.mockImplementation((name: string) => {
+      const inputs: Record<string, string> = {
+        github_token: 'test-token',
+        reasons: 'mention,assign',
+        message_style: 'slack',
+        max_notifications: '50',
+        notification_action: 'none'
+      }
+      return inputs[name] || ''
+    })
   })
 
   afterEach(() => {
     jest.resetAllMocks()
   })
 
-  it('Sets the time output', async () => {
+  it('handles GitHub API errors gracefully', async () => {
     await run()
 
-    // Verify the time output was set.
-    expect(core.setOutput).toHaveBeenNthCalledWith(
-      1,
-      'time',
-      // Simple regex to match a time string in the format HH:MM:SS.
-      expect.stringMatching(/^\d{2}:\d{2}:\d{2}/)
-    )
+    // The action should fail with a meaningful error message when API call fails
+    // (Since we're using a fake token, GitHub API returns an auth error)
+    expect(core.setFailed).toHaveBeenCalled()
+    const errorArg = core.setFailed.mock.calls[0]?.[0]
+    expect(typeof errorArg).toBe('string')
+    expect(errorArg).toContain('credentials')
   })
 
-  it('Sets a failed status', async () => {
-    // Clear the getInput mock and return an invalid value.
-    core.getInput.mockClear().mockReturnValueOnce('this is not a number')
-
-    // Clear the wait mock and return a rejected promise.
-    wait
-      .mockClear()
-      .mockRejectedValueOnce(new Error('milliseconds is not a number'))
-
+  it('reads inputs from action configuration', async () => {
     await run()
 
-    // Verify that the action was marked as failed.
-    expect(core.setFailed).toHaveBeenNthCalledWith(
-      1,
-      'milliseconds is not a number'
-    )
+    // Should have read the required inputs
+    expect(core.getInput).toHaveBeenCalledWith('github_token')
+    expect(core.getInput).toHaveBeenCalledWith('reasons')
+    expect(core.getInput).toHaveBeenCalledWith('message_style')
+    expect(core.getInput).toHaveBeenCalledWith('max_notifications')
+    expect(core.getInput).toHaveBeenCalledWith('notification_action')
   })
 })

@@ -1,23 +1,48 @@
-name: The name of your action here
-description: Provide a description here
-author: Your name or organization here
+name: Issues notifications
+description:
+  Generate a formatted message from GitHub notifications for forwarding to
+  messaging platforms
+author: Francois Gerthoffert
 
-# Add your action's branding here. This will appear on the GitHub Marketplace.
 branding:
-  icon: heart
-  color: red
+  icon: activity
+  color: green
 
-# Define your inputs here.
 inputs:
-  milliseconds:
-    description: Your input description here
+  github_token:
+    description: GitHub token with read access to the project and its issues/PRs
     required: true
-    default: '1000'
+  reasons:
+    description:
+      Comma-separated list of notification reasons to filter by (e.g., mention,
+      assign). See
+      https://docs.github.com/en/rest/activity/notifications?apiVersion=2022-11-28#about-github-notifications
+      for the full list of reasons.
+    default: 'mention,assign'
+    required: false
+  message_style:
+    description:
+      The style of the formatted message output. Use 'slack' for
+      Slack-compatible formatting with emojis and links, or 'raw' for plain
+      text.
+    default: 'slack'
+    required: false
+  max_notifications:
+    description:
+      Maximum number of notifications to include in the message. Set to 0 or
+      leave empty to include all notifications.
+    default: '0'
+    required: false
+  notification_action:
+    description:
+      Action to perform on processed notification threads. Use 'none' to do
+      nothing (default), 'read' to mark as read, or 'done' to mark as done.
+    default: 'none'
+    required: false
 
-# Define your outputs here.
 outputs:
-  time:
-    description: Your output description here
+  message:
+    description: Formatted message listing all notifications
 
 runs:
   using: node24
