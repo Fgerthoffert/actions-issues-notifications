@@ -84083,12 +84083,16 @@ const formatNotificationSlack = (notifications) => {
             // Get emoji based on subject type
             const typeEmoji = getTypeEmoji(subjectType);
             // Build the notification message with proper Slack formatting
+            // Using separate lines with clear visual separation
             const prefix = hasMultiple ? `${index + 1}. ` : '';
-            return (`${prefix}${typeEmoji} *${subjectLink}*\n` +
-                `📂 Repository: ${repoLink}\n` +
-                `📌 Type: ${subjectType}\n` +
-                `🔔 Reason: ${reason}\n` +
-                `🕒 Updated: ${formatDate(updatedAt)}`);
+            const lines = [
+                `${prefix}${typeEmoji} *${subjectLink}*`,
+                `    📂 Repository: ${repoLink}`,
+                `    📌 Type: ${subjectType}`,
+                `    🔔 Reason: ${reason}`,
+                `    🕒 Updated: ${formatDate(updatedAt)}`
+            ];
+            return lines.join('\n');
         }
         catch {
             // If any error occurs processing this notification, return a safe fallback
