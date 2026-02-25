@@ -33,6 +33,12 @@ inputs:
       leave empty to include all notifications.
     default: '0'
     required: false
+  notification_action:
+    description:
+      Action to perform on processed notification threads. Use 'none' to do
+      nothing (default), 'read' to mark as read, or 'done' to mark as done.
+    default: 'none'
+    required: false
 
 outputs:
   message:

@@ -83942,6 +83942,30 @@ const getNotifications = async ({ githubToken, reasons }) => {
     return filteredNotifications;
 };
 
+const markNotificationThreadAsDone = async ({ githubToken, notification }) => {
+    const octokit = githubExports.getOctokit(githubToken);
+    await octokit.request('DELETE /notifications/threads/{thread_id}', {
+        thread_id: notification.id,
+        headers: {
+            'X-GitHub-Api-Version': '2022-11-28'
+        }
+    });
+    info(`Marked notification thread "${notification.subject?.title || 'No title'}" (ID: ${notification.id}) as done on GitHub`);
+    return;
+};
+
+const markNotificationThreadAsRead = async ({ githubToken, notification }) => {
+    const octokit = githubExports.getOctokit(githubToken);
+    await octokit.request('DELETE /notifications/threads/{thread_id}', {
+        thread_id: notification.id,
+        headers: {
+            'X-GitHub-Api-Version': '2022-11-28'
+        }
+    });
+    info(`Marked notification thread "${notification.subject?.title || 'No title'}" (ID: ${notification.id}) as done on GitHub`);
+    return;
+};
+
 /**
  * Converts a GitHub API URL to a browser-accessible URL.
  *
@@ -84132,6 +84156,7 @@ async function run() {
         const inputReasons = getInput('reasons');
         const inputMessageStyle = getInput('message_style');
         const inputMaxNotifications = parseInt(getInput('max_notifications') || '0', 10);
+        const inputNotificationAction = getInput('notification_action');
         // Simple API call to ensure the provided token is valid and display the associated username
         await getConnectedUser({ githubToken: inputGithubToken });
         // Retrieve the raw list of notifications from GitHub based on the provided reasons
@@ -84152,7 +84177,25 @@ async function run() {
         }
         const preparedMessage = prepareMessage(notifications, inputMessageStyle);
         setOutput('message', preparedMessage);
-        // core.setOutput('notifications', JSON.stringify(notifications))
+        // Process notification actions (mark as read or done) if configured
+        if (inputNotificationAction === 'read') {
+            info('Marking processed notifications as read...');
+            for (const notification of notifications) {
+                await markNotificationThreadAsRead({
+                    githubToken: inputGithubToken,
+                    notification
+                });
+            }
+        }
+        else if (inputNotificationAction === 'done') {
+            info('Marking processed notifications as done...');
+            for (const notification of notifications) {
+                await markNotificationThreadAsDone({
+                    githubToken: inputGithubToken,
+                    notification
+                });
+            }
+        }
     }
     catch (error) {
         // Fail the workflow run if an error occurs

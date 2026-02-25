@@ -1,5 +1,5 @@
 export interface GitHubNotification {
-  id: string
+  id: number
   unread: boolean
   updated_at: string
   last_read_at: string

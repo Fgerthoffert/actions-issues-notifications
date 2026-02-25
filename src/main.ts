@@ -1,9 +1,11 @@
 import * as core from '@actions/core'
 
-import type { MessageStyle } from './types/messageStyle.js'
+import type { MessageStyle, NotificationAction } from './types/index.js'
 
 import { getConnectedUser } from './utils/github/getConnectedUser.js'
 import { getNotifications } from './utils/github/getNotifications.js'
+import { markNotificationThreadAsDone } from './utils/github/markNotificationThreadAsDone.js'
+import { markNotificationThreadAsRead } from './utils/github/markNotificationThreadAsRead.js'
 import { prepareMessage } from './utils/prepareMessage.js'
 
 /**
@@ -20,6 +22,9 @@ export async function run(): Promise<void> {
       core.getInput('max_notifications') || '0',
       10
     )
+    const inputNotificationAction = core.getInput(
+      'notification_action'
+    ) as NotificationAction
 
     // Simple API call to ensure the provided token is valid and display the associated username
     await getConnectedUser({ githubToken: inputGithubToken })
@@ -50,7 +55,25 @@ export async function run(): Promise<void> {
     const preparedMessage = prepareMessage(notifications, inputMessageStyle)
 
     core.setOutput('message', preparedMessage)
-    // core.setOutput('notifications', JSON.stringify(notifications))
+
+    // Process notification actions (mark as read or done) if configured
+    if (inputNotificationAction === 'read') {
+      core.info('Marking processed notifications as read...')
+      for (const notification of notifications) {
+        await markNotificationThreadAsRead({
+          githubToken: inputGithubToken,
+          notification
+        })
+      }
+    } else if (inputNotificationAction === 'done') {
+      core.info('Marking processed notifications as done...')
+      for (const notification of notifications) {
+        await markNotificationThreadAsDone({
+          githubToken: inputGithubToken,
+          notification
+        })
+      }
+    }
   } catch (error) {
     // Fail the workflow run if an error occurs
     if (error instanceof Error) core.setFailed(error.message)
