@@ -118,27 +118,27 @@ For the complete list, see
 
 1. Go to
    [GitHub Settings → Developer settings → Personal access tokens → Fine-grained tokens](https://github.com/settings/tokens?type=beta)
-2. Click **Generate new token**
-3. Give it a descriptive name (e.g., "Notifications Action")
-4. Set the expiration as needed
-5. Under **Repository access**, select the repositories you want notifications
+1. Click **Generate new token**
+1. Give it a descriptive name (e.g., "Notifications Action")
+1. Set the expiration as needed
+1. Under **Repository access**, select the repositories you want notifications
    for
-6. Under **Permissions**, grant:
+1. Under **Permissions**, grant:
    - **Notifications**: Read and Write
    - **Metadata**: Read-only (automatically selected)
-7. Click **Generate token** and copy it
+1. Click **Generate token** and copy it
 
 ### Step 2: Create a Slack Bot Token
 
 1. Go to [Slack API Apps](https://api.slack.com/apps) and click **Create New
    App**
-2. Choose **From scratch**, name your app, and select your workspace
-3. Go to **OAuth & Permissions** in the sidebar
-4. Under **Scopes → Bot Token Scopes**, add:
+1. Choose **From scratch**, name your app, and select your workspace
+1. Go to **OAuth & Permissions** in the sidebar
+1. Under **Scopes → Bot Token Scopes**, add:
    - `chat:write` - To send messages
    - `chat:write.public` - To send to public channels without joining
-5. Click **Install to Workspace** and authorize
-6. Copy the **Bot User OAuth Token** (starts with `xoxb-`)
+1. Click **Install to Workspace** and authorize
+1. Copy the **Bot User OAuth Token** (starts with `xoxb-`)
 
 For more details, see
 [Slack's Getting Started Guide](https://api.slack.com/start/quickstart).
@@ -147,7 +147,7 @@ For more details, see
 
 1. Go to your repository → **Settings** → **Secrets and variables** →
    **Actions**
-2. Add the following secrets:
+1. Add the following secrets:
    - `NOTIFICATIONS_GITHUB_TOKEN` - Your GitHub Personal Access Token
    - `SLACK_BOT_TOKEN` - Your Slack Bot OAuth Token
 
@@ -192,7 +192,7 @@ jobs:
           token: ${{ secrets.SLACK_BOT_TOKEN }}
           payload: |
             {
-              "channel": "${{ inputs.slack_channel || 'YOUR_DEFAULT_CHANNEL_ID' }}",
+              "channel": "${{ inputs.slack_channel || 'CHANNEL_ID' }}",
               "text": ${{ toJSON(steps.notifications.outputs.message) }}
             }
 ```
@@ -274,7 +274,7 @@ jobs:
 
 ### Slack Format (`message_style: 'slack'`)
 
-```
+```text
 📬 *GitHub Notifications* (2)
 
 1. 🐛 *<https://github.com/org/repo/issues/123|Fix login bug>*
@@ -292,7 +292,7 @@ jobs:
 
 ### Raw Format (`message_style: 'raw'`)
 
-```
+```text
 GitHub Notifications (2)
 ========================================
 
