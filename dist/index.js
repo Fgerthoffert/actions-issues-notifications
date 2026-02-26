@@ -88536,6 +88536,8 @@ async function run() {
         setOutput('message', preparedMessage);
         // Process notification actions (mark as read or done) if configured
         info('Marking processed notifications as read...');
+        // Reset the notifications actions count before processing the filtered notifications
+        notificationsActionsCount = 0;
         for (const notification of notifications) {
             if (inputMaxNotificationsAction > 0 &&
                 notificationsActionsCount >= inputMaxNotificationsAction) {
