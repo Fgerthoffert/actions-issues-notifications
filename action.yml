@@ -39,6 +39,13 @@ inputs:
       nothing (default), 'read' to mark as read, or 'done' to mark as done.
     default: 'none'
     required: false
+  max_notifications_action:
+    description:
+      Maximum number of notifications to apply the notification_action to. This
+      is useful to prevent marking too many notifications as read/done if you
+      have a large backlog.
+    default: '50'
+    required: false
   apply_action_to_excluded:
     description:
       If true, also apply the notification_action to notifications that were

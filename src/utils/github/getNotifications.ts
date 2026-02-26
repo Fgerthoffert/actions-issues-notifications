@@ -1,5 +1,7 @@
 import * as core from '@actions/core'
-import * as github from '@actions/github'
+import { Octokit } from '@octokit/core'
+import { paginateRest } from '@octokit/plugin-paginate-rest'
+import { restEndpointMethods } from '@octokit/plugin-rest-endpoint-methods'
 
 import type { GitHubNotification } from '../../types/github.js'
 
@@ -8,11 +10,13 @@ export const getNotifications = async ({
 }: {
   githubToken: string
 }): Promise<GitHubNotification[]> => {
-  const octokit = github.getOctokit(githubToken)
+  const MyOctokit = Octokit.plugin(paginateRest, restEndpointMethods)
+  const octokit = new MyOctokit({ auth: githubToken })
 
-  const notifications = await octokit.request(
-    'GET /notifications?participating=true',
+  const notifications = await octokit.paginate(
+    octokit.rest.activity.listNotificationsForAuthenticatedUser,
     {
+      per_page: 50,
       headers: {
         'X-GitHub-Api-Version': '2022-11-28'
       }
@@ -20,8 +24,8 @@ export const getNotifications = async ({
   )
 
   core.info(
-    `Fetched a total of ${notifications.data.length} notifications from GitHub`
+    `Fetched a total of ${notifications.length} notifications from GitHub`
   )
 
-  return notifications.data
+  return notifications as unknown as GitHubNotification[]
 }
