@@ -2,8 +2,8 @@
 <p align="center">
   <img alt="ZenCrepesLogo" src="docs/zencrepes-logo.png" height="140" />
   <h2 align="center">GitHub Issues Notifications Action</h2>
-    <p align="center">A GitHub Action to collect notifications from GitHub
-    Issues and prepare a message that can be then forwarded to messaging
+    <p align="center">A GitHub Action to collect GitHub notifications and 
+    prepare a message that can be then forwarded to messaging
     platforms like Slack. Aims at covering for the fact that Scheduled
     Reminders only work for Pull Requests, not Issues.</p>
 </p>
@@ -26,6 +26,10 @@ This action was created specifically to receive notifications about events in
 **Issues**, providing an alternative to
 [GitHub Scheduled Reminders](https://docs.github.com/en/account-and-profile/setting-up-and-managing-your-personal-account-on-github/managing-your-membership-in-organizations/managing-your-scheduled-reminders)
 which sadly only works for Pull Requests, not Issues.
+
+Its role is to act as a bridge between GitHub's Notifications API and messaging
+platforms like Slack, allowing you to stay informed about important updates
+without having to constantly check your GitHub notifications dashboard.
 
 ## Why This Action?
 
@@ -64,7 +68,7 @@ on:
     - cron: '0 7-20 * * 1-5'
 ```
 
-### 2. Real-Time Notifications (One at a Time)
+### 2. Pseudo Real-Time Notifications (One at a Time)
 
 Run the workflow more frequently (e.g., every 10 minutes) but process only one
 notification at a time. This prevents being overwhelmed while still receiving
