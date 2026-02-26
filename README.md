@@ -83,13 +83,28 @@ notification_action: 'done' # Mark as done after processing
 
 ## Inputs
 
-| Input                 | Description                                                                                                     | Required | Default          |
-| --------------------- | --------------------------------------------------------------------------------------------------------------- | -------- | ---------------- |
-| `github_token`        | GitHub token with notifications read access                                                                     | Yes      | -                |
-| `reasons`             | Comma-separated list of notification reasons to filter (e.g., `mention,assign`)                                 | No       | `mention,assign` |
-| `message_style`       | Output format: `slack` for Slack-compatible formatting with emojis and links, or `raw` for plain text           | No       | `slack`          |
-| `max_notifications`   | Maximum number of notifications to include. Set to `0` for unlimited                                            | No       | `0`              |
-| `notification_action` | Action to perform on processed notifications: `none` (do nothing), `read` (mark as read), or `done` (mark done) | No       | `none`           |
+| Input                      | Description                                                                                                     | Required | Default          |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------- | -------- | ---------------- |
+| `github_token`             | GitHub token with notifications read access                                                                     | Yes      | -                |
+| `reasons`                  | Comma-separated list of notification reasons to filter (e.g., `mention,assign`)                                 | No       | `mention,assign` |
+| `message_style`            | Output format: `slack` for Slack-compatible formatting with emojis and links, or `raw` for plain text           | No       | `slack`          |
+| `max_notifications`        | Maximum number of notifications to include. Set to `0` for unlimited                                            | No       | `0`              |
+| `notification_action`      | Action to perform on processed notifications: `none` (do nothing), `read` (mark as read), or `done` (mark done) | No       | `none`           |
+| `apply_action_to_excluded` | If `true`, also apply `notification_action` to notifications excluded by the reasons filter                     | No       | `false`          |
+
+> **Note**: Notification actions (`read` or `done`) are applied individually to
+> each notification thread, not in batch. If you have a large backlog of
+> notifications, it's recommended to start from a clean slate by marking all
+> notifications as done in your
+> [GitHub Notifications dashboard](https://github.com/notifications) before
+> using this action.
+
+> **Why `apply_action_to_excluded`?** When filtering notifications by specific
+> reasons (e.g., only `mention` and `assign`), other notifications like
+> `subscribed` or `state_change` will accumulate in your inbox over time. By
+> enabling this option, those excluded notifications are automatically marked as
+> read or done (as per `notification_action`), keeping your GitHub notifications
+> dashboard clean without manual intervention.
 
 ## Outputs
 
