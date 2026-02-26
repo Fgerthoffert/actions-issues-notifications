@@ -92,19 +92,19 @@ notification_action: 'done' # Mark as done after processing
 | `notification_action`      | Action to perform on processed notifications: `none` (do nothing), `read` (mark as read), or `done` (mark done) | No       | `none`           |
 | `apply_action_to_excluded` | If `true`, also apply `notification_action` to notifications excluded by the reasons filter                     | No       | `false`          |
 
-> **Note**: Notification actions (`read` or `done`) are applied individually to
-> each notification thread, not in batch. If you have a large backlog of
-> notifications, it's recommended to start from a clean slate by marking all
-> notifications as done in your
-> [GitHub Notifications dashboard](https://github.com/notifications) before
-> using this action.
+**Note**: Notification actions (`read` or `done`) are applied individually to
+each notification thread, not in batch. If you have a large backlog of
+notifications, it's recommended to start from a clean slate by marking all
+notifications as done in your
+[GitHub Notifications dashboard](https://github.com/notifications) before using
+this action.
 
-> **Why `apply_action_to_excluded`?** When filtering notifications by specific
-> reasons (e.g., only `mention` and `assign`), other notifications like
-> `subscribed` or `state_change` will accumulate in your inbox over time. By
-> enabling this option, those excluded notifications are automatically marked as
-> read or done (as per `notification_action`), keeping your GitHub notifications
-> dashboard clean without manual intervention.
+**Why `apply_action_to_excluded`?** When filtering notifications by specific
+reasons (e.g., only `mention` and `assign`), other notifications like
+`subscribed` or `state_change` will accumulate in your inbox over time. By
+enabling this option, those excluded notifications are automatically marked as
+read or done (as per `notification_action`), keeping your GitHub notifications
+dashboard clean without manual intervention.
 
 ## Outputs
 
