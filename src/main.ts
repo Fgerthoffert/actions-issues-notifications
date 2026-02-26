@@ -26,7 +26,7 @@ export async function run(): Promise<void> {
       'notification_action'
     ) as NotificationAction
     const inputMaxNotificationsAction = parseInt(
-      core.getInput('max_notifications') || '0',
+      core.getInput('max_notifications_action') || '0',
       10
     )
     const inputApplyActionToExcluded =

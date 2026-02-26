@@ -88476,7 +88476,7 @@ async function run() {
         const inputMessageStyle = getInput('message_style');
         const inputMaxNotifications = parseInt(getInput('max_notifications') || '0', 10);
         const inputNotificationAction = getInput('notification_action');
-        const inputMaxNotificationsAction = parseInt(getInput('max_notifications') || '0', 10);
+        const inputMaxNotificationsAction = parseInt(getInput('max_notifications_action') || '0', 10);
         const inputApplyActionToExcluded = getInput('apply_action_to_excluded') === 'true';
         // Simple API call to ensure the provided token is valid and display the associated username
         await getConnectedUser({ githubToken: inputGithubToken });
