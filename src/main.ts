@@ -25,6 +25,10 @@ export async function run(): Promise<void> {
     const inputNotificationAction = core.getInput(
       'notification_action'
     ) as NotificationAction
+    const inputMaxNotificationsAction = parseInt(
+      core.getInput('max_notifications') || '0',
+      10
+    )
     const inputApplyActionToExcluded =
       core.getInput('apply_action_to_excluded') === 'true'
 
@@ -49,6 +53,8 @@ export async function run(): Promise<void> {
         .join(', ')}`
     )
 
+    let notificationsActionsCount = 0
+
     // To avoid the notifications from cluttering the user's inbox, we can optionally
     //  apply the configured action (mark as read or done) to the excluded notifications as well.
     if (inputApplyActionToExcluded) {
@@ -59,16 +65,27 @@ export async function run(): Promise<void> {
           !filteredNotifications.some((n) => n.id === notification.id)
       )
       for (const notification of excludedNotifications) {
+        if (
+          inputMaxNotificationsAction > 0 &&
+          notificationsActionsCount >= inputMaxNotificationsAction
+        ) {
+          core.info(
+            `Reached the maximum number of notifications to apply the action to (${inputMaxNotificationsAction}), skipping remaining excluded notifications.`
+          )
+          break
+        }
         if (inputNotificationAction === 'read') {
           await markNotificationThreadAsRead({
             githubToken: inputGithubToken,
             notification
           })
+          notificationsActionsCount++
         } else if (inputNotificationAction === 'done') {
           await markNotificationThreadAsDone({
             githubToken: inputGithubToken,
             notification
           })
+          notificationsActionsCount++
         }
       }
     }
@@ -95,21 +112,29 @@ export async function run(): Promise<void> {
     core.setOutput('message', preparedMessage)
 
     // Process notification actions (mark as read or done) if configured
-    if (inputNotificationAction === 'read') {
-      core.info('Marking processed notifications as read...')
-      for (const notification of notifications) {
+    core.info('Marking processed notifications as read...')
+    for (const notification of notifications) {
+      if (
+        inputMaxNotificationsAction > 0 &&
+        notificationsActionsCount >= inputMaxNotificationsAction
+      ) {
+        core.info(
+          `Reached the maximum number of notifications to apply the action to (${inputMaxNotificationsAction}), skipping remaining excluded notifications.`
+        )
+        break
+      }
+      if (inputNotificationAction === 'read') {
         await markNotificationThreadAsRead({
           githubToken: inputGithubToken,
           notification
         })
-      }
-    } else if (inputNotificationAction === 'done') {
-      core.info('Marking processed notifications as done...')
-      for (const notification of notifications) {
+        notificationsActionsCount++
+      } else if (inputNotificationAction === 'done') {
         await markNotificationThreadAsDone({
           githubToken: inputGithubToken,
           notification
         })
+        notificationsActionsCount++
       }
     }
   } catch (error) {

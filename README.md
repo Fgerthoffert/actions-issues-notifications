@@ -38,6 +38,16 @@ Requests. If you rely heavily on Issues for project management and want to
 receive timely notifications in Slack (or other messaging platforms), this
 action fills that gap.
 
+## ⚠️ Start with a Clean Inbox
+
+This action uses pagination to fetch all your notifications, which could be a
+large number if you have a backlog. **Before using this action**, we strongly
+recommend clearing your notifications by marking them all as done in your
+[GitHub Notifications dashboard](https://github.com/notifications).
+
+As a safeguard, the `max_notifications_action` parameter defaults to `50`,
+limiting how many notifications can be marked as read/done per action run.
+
 ## Resource Considerations
 
 Please be mindful of resource usage when configuring this action. GitHub Actions
@@ -87,21 +97,18 @@ notification_action: 'done' # Mark as done after processing
 
 ## Inputs
 
-| Input                      | Description                                                                                                     | Required | Default          |
-| -------------------------- | --------------------------------------------------------------------------------------------------------------- | -------- | ---------------- |
-| `github_token`             | GitHub token with notifications read access                                                                     | Yes      | -                |
-| `reasons`                  | Comma-separated list of notification reasons to filter (e.g., `mention,assign`)                                 | No       | `mention,assign` |
-| `message_style`            | Output format: `slack` for Slack-compatible formatting with emojis and links, or `raw` for plain text           | No       | `slack`          |
-| `max_notifications`        | Maximum number of notifications to include. Set to `0` for unlimited                                            | No       | `0`              |
-| `notification_action`      | Action to perform on processed notifications: `none` (do nothing), `read` (mark as read), or `done` (mark done) | No       | `none`           |
-| `apply_action_to_excluded` | If `true`, also apply `notification_action` to notifications excluded by the reasons filter                     | No       | `false`          |
+| Input                      | Description                                                                                                        | Required | Default          |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------ | -------- | ---------------- |
+| `github_token`             | GitHub token with notifications read access                                                                        | Yes      | -                |
+| `reasons`                  | Comma-separated list of notification reasons to filter (e.g., `mention,assign`)                                    | No       | `mention,assign` |
+| `message_style`            | Output format: `slack` for Slack-compatible formatting with emojis and links, or `raw` for plain text              | No       | `slack`          |
+| `max_notifications`        | Maximum number of notifications to include. Set to `0` for unlimited                                               | No       | `0`              |
+| `notification_action`      | Action to perform on processed notifications: `none` (do nothing), `read` (mark as read), or `done` (mark done)    | No       | `none`           |
+| `max_notifications_action` | Maximum number of notifications to apply `notification_action` to per run. Prevents mass updates on large backlogs | No       | `50`             |
+| `apply_action_to_excluded` | If `true`, also apply `notification_action` to notifications excluded by the reasons filter                        | No       | `false`          |
 
 **Note**: Notification actions (`read` or `done`) are applied individually to
-each notification thread, not in batch. If you have a large backlog of
-notifications, it's recommended to start from a clean slate by marking all
-notifications as done in your
-[GitHub Notifications dashboard](https://github.com/notifications) before using
-this action.
+each notification thread, not in batch.
 
 **Why `apply_action_to_excluded`?** When filtering notifications by specific
 reasons (e.g., only `mention` and `assign`), other notifications like
