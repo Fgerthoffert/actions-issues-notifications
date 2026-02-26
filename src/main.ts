@@ -25,17 +25,55 @@ export async function run(): Promise<void> {
     const inputNotificationAction = core.getInput(
       'notification_action'
     ) as NotificationAction
+    const inputApplyActionToExcluded =
+      core.getInput('apply_action_to_excluded') === 'true'
 
     // Simple API call to ensure the provided token is valid and display the associated username
     await getConnectedUser({ githubToken: inputGithubToken })
 
     // Retrieve the raw list of notifications from GitHub based on the provided reasons
     let notifications = await getNotifications({
-      githubToken: inputGithubToken,
-      reasons: inputReasons.split(',').map((reason) => reason.trim())
+      githubToken: inputGithubToken
     })
 
-    if (notifications.length === 0) {
+    const filteredNotifications = notifications.filter((notification) =>
+      inputReasons
+        .split(',')
+        .map((reason) => reason.trim())
+        .includes(notification.reason)
+    )
+    core.info(
+      `Fetched a total of ${filteredNotifications.length} notifications from GitHub after filtering by reasons: ${inputReasons
+        .split(',')
+        .map((reason) => reason.trim())
+        .join(', ')}`
+    )
+
+    // To avoid the notifications from cluttering the user's inbox, we can optionally
+    //  apply the configured action (mark as read or done) to the excluded notifications as well.
+    if (inputApplyActionToExcluded) {
+      core.info('Applying action to excluded notifications...')
+      // Get the list of all notifications that are not included in the filtered list
+      const excludedNotifications = notifications.filter(
+        (notification) =>
+          !filteredNotifications.some((n) => n.id === notification.id)
+      )
+      for (const notification of excludedNotifications) {
+        if (inputNotificationAction === 'read') {
+          await markNotificationThreadAsRead({
+            githubToken: inputGithubToken,
+            notification
+          })
+        } else if (inputNotificationAction === 'done') {
+          await markNotificationThreadAsDone({
+            githubToken: inputGithubToken,
+            notification
+          })
+        }
+      }
+    }
+
+    if (filteredNotifications.length === 0) {
       core.info('No notifications found, exiting the action')
       return
     }

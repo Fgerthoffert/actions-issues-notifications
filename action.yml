@@ -39,6 +39,13 @@ inputs:
       nothing (default), 'read' to mark as read, or 'done' to mark as done.
     default: 'none'
     required: false
+  apply_action_to_excluded:
+    description:
+      If true, also apply the notification_action to notifications that were
+      excluded by the reasons filter. This helps prevent unrelated notifications
+      from piling up in your inbox.
+    default: 'false'
+    required: false
 
 outputs:
   message:

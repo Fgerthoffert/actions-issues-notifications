@@ -83928,7 +83928,7 @@ const getConnectedUser = async ({ githubToken }) => {
     return login;
 };
 
-const getNotifications = async ({ githubToken, reasons }) => {
+const getNotifications = async ({ githubToken }) => {
     const octokit = githubExports.getOctokit(githubToken);
     const notifications = await octokit.request('GET /notifications?participating=true', {
         headers: {
@@ -83936,10 +83936,7 @@ const getNotifications = async ({ githubToken, reasons }) => {
         }
     });
     info(`Fetched a total of ${notifications.data.length} notifications from GitHub`);
-    // Filter notifications based on the specified reasons
-    const filteredNotifications = notifications.data.filter((notification) => reasons.includes(notification.reason));
-    info(`Fetched a total of ${filteredNotifications.length} notifications from GitHub after filtering by reasons: ${reasons.join(', ')}`);
-    return filteredNotifications;
+    return notifications.data;
 };
 
 const markNotificationThreadAsDone = async ({ githubToken, notification }) => {
@@ -84157,14 +84154,43 @@ async function run() {
         const inputMessageStyle = getInput('message_style');
         const inputMaxNotifications = parseInt(getInput('max_notifications') || '0', 10);
         const inputNotificationAction = getInput('notification_action');
+        const inputApplyActionToExcluded = getInput('apply_action_to_excluded') === 'true';
         // Simple API call to ensure the provided token is valid and display the associated username
         await getConnectedUser({ githubToken: inputGithubToken });
         // Retrieve the raw list of notifications from GitHub based on the provided reasons
         let notifications = await getNotifications({
-            githubToken: inputGithubToken,
-            reasons: inputReasons.split(',').map((reason) => reason.trim())
+            githubToken: inputGithubToken
         });
-        if (notifications.length === 0) {
+        const filteredNotifications = notifications.filter((notification) => inputReasons
+            .split(',')
+            .map((reason) => reason.trim())
+            .includes(notification.reason));
+        info(`Fetched a total of ${filteredNotifications.length} notifications from GitHub after filtering by reasons: ${inputReasons
+            .split(',')
+            .map((reason) => reason.trim())
+            .join(', ')}`);
+        // To avoid the notifications from cluttering the user's inbox, we can optionally
+        //  apply the configured action (mark as read or done) to the excluded notifications as well.
+        if (inputApplyActionToExcluded) {
+            info('Applying action to excluded notifications...');
+            // Get the list of all notifications that are not included in the filtered list
+            const excludedNotifications = notifications.filter((notification) => !filteredNotifications.some((n) => n.id === notification.id));
+            for (const notification of excludedNotifications) {
+                if (inputNotificationAction === 'read') {
+                    await markNotificationThreadAsRead({
+                        githubToken: inputGithubToken,
+                        notification
+                    });
+                }
+                else if (inputNotificationAction === 'done') {
+                    await markNotificationThreadAsDone({
+                        githubToken: inputGithubToken,
+                        notification
+                    });
+                }
+            }
+        }
+        if (filteredNotifications.length === 0) {
             info('No notifications found, exiting the action');
             return;
         }

@@ -2,8 +2,8 @@
 <p align="center">
   <img alt="ZenCrepesLogo" src="docs/zencrepes-logo.png" height="140" />
   <h2 align="center">GitHub Issues Notifications Action</h2>
-    <p align="center">A GitHub Action to collect notifications from GitHub
-    Issues and prepare a message that can be then forwarded to messaging
+    <p align="center">A GitHub Action to collect GitHub notifications and
+    prepare a message that can be then forwarded to messaging
     platforms like Slack. Aims at covering for the fact that Scheduled
     Reminders only work for Pull Requests, not Issues.</p>
 </p>
@@ -26,6 +26,10 @@ This action was created specifically to receive notifications about events in
 **Issues**, providing an alternative to
 [GitHub Scheduled Reminders](https://docs.github.com/en/account-and-profile/setting-up-and-managing-your-personal-account-on-github/managing-your-membership-in-organizations/managing-your-scheduled-reminders)
 which sadly only works for Pull Requests, not Issues.
+
+Its role is to act as a bridge between GitHub's Notifications API and messaging
+platforms like Slack, allowing you to stay informed about important updates
+without having to constantly check your GitHub notifications dashboard.
 
 ## Why This Action?
 
@@ -64,7 +68,7 @@ on:
     - cron: '0 7-20 * * 1-5'
 ```
 
-### 2. Real-Time Notifications (One at a Time)
+### 2. Pseudo Real-Time Notifications (One at a Time)
 
 Run the workflow more frequently (e.g., every 10 minutes) but process only one
 notification at a time. This prevents being overwhelmed while still receiving
@@ -83,13 +87,28 @@ notification_action: 'done' # Mark as done after processing
 
 ## Inputs
 
-| Input                 | Description                                                                                                     | Required | Default          |
-| --------------------- | --------------------------------------------------------------------------------------------------------------- | -------- | ---------------- |
-| `github_token`        | GitHub token with notifications read access                                                                     | Yes      | -                |
-| `reasons`             | Comma-separated list of notification reasons to filter (e.g., `mention,assign`)                                 | No       | `mention,assign` |
-| `message_style`       | Output format: `slack` for Slack-compatible formatting with emojis and links, or `raw` for plain text           | No       | `slack`          |
-| `max_notifications`   | Maximum number of notifications to include. Set to `0` for unlimited                                            | No       | `0`              |
-| `notification_action` | Action to perform on processed notifications: `none` (do nothing), `read` (mark as read), or `done` (mark done) | No       | `none`           |
+| Input                      | Description                                                                                                     | Required | Default          |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------- | -------- | ---------------- |
+| `github_token`             | GitHub token with notifications read access                                                                     | Yes      | -                |
+| `reasons`                  | Comma-separated list of notification reasons to filter (e.g., `mention,assign`)                                 | No       | `mention,assign` |
+| `message_style`            | Output format: `slack` for Slack-compatible formatting with emojis and links, or `raw` for plain text           | No       | `slack`          |
+| `max_notifications`        | Maximum number of notifications to include. Set to `0` for unlimited                                            | No       | `0`              |
+| `notification_action`      | Action to perform on processed notifications: `none` (do nothing), `read` (mark as read), or `done` (mark done) | No       | `none`           |
+| `apply_action_to_excluded` | If `true`, also apply `notification_action` to notifications excluded by the reasons filter                     | No       | `false`          |
+
+**Note**: Notification actions (`read` or `done`) are applied individually to
+each notification thread, not in batch. If you have a large backlog of
+notifications, it's recommended to start from a clean slate by marking all
+notifications as done in your
+[GitHub Notifications dashboard](https://github.com/notifications) before using
+this action.
+
+**Why `apply_action_to_excluded`?** When filtering notifications by specific
+reasons (e.g., only `mention` and `assign`), other notifications like
+`subscribed` or `state_change` will accumulate in your inbox over time. By
+enabling this option, those excluded notifications are automatically marked as
+read or done (as per `notification_action`), keeping your GitHub notifications
+dashboard clean without manual intervention.
 
 ## Outputs
 

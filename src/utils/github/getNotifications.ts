@@ -4,11 +4,9 @@ import * as github from '@actions/github'
 import type { GitHubNotification } from '../../types/github.js'
 
 export const getNotifications = async ({
-  githubToken,
-  reasons
+  githubToken
 }: {
   githubToken: string
-  reasons: string[]
 }): Promise<GitHubNotification[]> => {
   const octokit = github.getOctokit(githubToken)
 
@@ -25,14 +23,5 @@ export const getNotifications = async ({
     `Fetched a total of ${notifications.data.length} notifications from GitHub`
   )
 
-  // Filter notifications based on the specified reasons
-  const filteredNotifications = notifications.data.filter(
-    (notification: GitHubNotification) => reasons.includes(notification.reason)
-  )
-
-  core.info(
-    `Fetched a total of ${filteredNotifications.length} notifications from GitHub after filtering by reasons: ${reasons.join(', ')}`
-  )
-
-  return filteredNotifications
+  return notifications.data
 }
