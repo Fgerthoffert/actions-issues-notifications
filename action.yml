@@ -17,7 +17,7 @@ inputs:
       Comma-separated list of notification reasons to filter by (e.g., mention,
       assign). See
       https://docs.github.com/en/rest/activity/notifications?apiVersion=2022-11-28#about-github-notifications
-      for the full list of reasons.
+      for the full list of reasons. Use 'all' to include all reasons.
     default: 'mention,assign'
     required: false
   message_style:
