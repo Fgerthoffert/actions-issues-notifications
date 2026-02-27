@@ -35,17 +35,22 @@ export async function run(): Promise<void> {
     // Simple API call to ensure the provided token is valid and display the associated username
     await getConnectedUser({ githubToken: inputGithubToken })
 
-    // Retrieve the raw list of notifications from GitHub based on the provided reasons
+    // Retrieve the raw list of notifications from GitHub
     let notifications = await getNotifications({
       githubToken: inputGithubToken
     })
 
-    const filteredNotifications = notifications.filter((notification) =>
-      inputReasons
-        .split(',')
-        .map((reason) => reason.trim())
-        .includes(notification.reason)
-    )
+    let filteredNotifications = []
+    if (inputReasons !== 'all') {
+      filteredNotifications = notifications.filter((notification) =>
+        inputReasons
+          .split(',')
+          .map((reason) => reason.trim())
+          .includes(notification.reason)
+      )
+    } else {
+      filteredNotifications = notifications
+    }
     core.info(
       `Fetched a total of ${filteredNotifications.length} notifications from GitHub after filtering by reasons: ${inputReasons
         .split(',')

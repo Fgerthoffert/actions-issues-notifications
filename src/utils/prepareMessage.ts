@@ -1,7 +1,6 @@
 import type { GitHubNotification, MessageStyle } from '../types/index.js'
 
-import { formatNotificationRaw } from './formatters/formatNotificationRaw.js'
-import { formatNotificationSlack } from './formatters/formatNotificationSlack.js'
+import { formatSingleNotification } from './formatters/formatSingleNotification.js'
 
 /**
  * Formats an array of GitHub notifications into a message based on the specified style.
@@ -18,9 +17,29 @@ export const prepareMessage = (
     return 'No notifications found.'
   }
 
-  if (style === 'slack') {
-    return formatNotificationSlack(notifications)
+  if (notifications.length === 1) {
+    try {
+      return formatSingleNotification(notifications[0], style)
+    } catch {
+      return '⚠️ Error processing notification'
+    }
   }
 
-  return formatNotificationRaw(notifications)
+  // Multiple notifications: full details with header
+  let header = `📬 *GitHub Notifications* (${notifications.length})\n\n`
+  if (style === 'raw') {
+    header = `GitHub Notifications (${notifications.length}):\n\n`
+  }
+
+  const formattedNotifications = notifications
+    .map((notification, index) => {
+      try {
+        return `${index + 1}. ${formatSingleNotification(notification, style)}`
+      } catch {
+        return `${index + 1}. ⚠️ Error processing notification`
+      }
+    })
+    .join('\n\n')
+
+  return header + formattedNotifications
 }

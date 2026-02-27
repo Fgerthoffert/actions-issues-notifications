@@ -88315,6 +88315,36 @@ const convertApiUrlToBrowserUrl = (apiUrl) => {
 };
 
 /**
+ * Converts a GitHub notification reason to a human-readable phrase.
+ * The phrase explains WHY you're receiving the notification (your past relationship
+ * with the item), not what action just happened.
+ *
+ * @see https://docs.github.com/en/rest/activity/notifications#about-notification-reasons
+ * @param reason - The notification reason from GitHub API
+ * @returns A human-readable phrase describing why you're notified
+ */
+const getReasonPhrase = (reason) => {
+    const reasonPhrases = {
+        approval_requested: 'Approval requested on',
+        assign: 'Assigned to',
+        author: 'Activity on your',
+        ci_activity: 'CI completed for',
+        comment: 'Activity on commented',
+        invitation: 'Invitation to',
+        manual: 'Activity on subscribed',
+        member_feature_requested: 'Feature request in',
+        mention: 'Mentioned in',
+        review_requested: 'Review requested on',
+        security_advisory_credit: 'Credit for advisory on',
+        security_alert: 'Security alert on',
+        state_change: 'Activity after state change on',
+        subscribed: 'Activity on watched',
+        team_mention: 'Activity after team mention in'
+    };
+    return reasonPhrases[reason] || 'Notification for';
+};
+
+/**
  * Formats an ISO date string into a human-readable format.
  *
  * @param dateString - The ISO date string to format
@@ -88340,111 +88370,29 @@ const formatDate = (dateString) => {
 };
 
 /**
- * Formats an array of GitHub notifications into a raw plain-text message.
+ * Formats a single notification into a compact single-line Slack message.
  *
- * @param notifications - Array of GitHub notifications to format
- * @returns A formatted plain-text string message
+ * @param notification - The GitHub notification to format
+ * @param style - The message style to use (defaults to 'slack')
+ * @returns A formatted single-line string for Slack
  */
-const formatNotificationRaw = (notifications) => {
-    const header = `\n`;
-    const formattedNotifications = notifications
-        .map((notification, index) => {
-        try {
-            // Safely extract values with fallbacks
-            const repoUrl = convertApiUrlToBrowserUrl(notification?.repository?.url || '');
-            const reason = notification?.reason || 'unknown';
-            const updatedAt = notification?.updated_at || 'N/A';
-            const subjectTitle = notification?.subject?.title || 'No title';
-            const subjectType = notification?.subject?.type || 'Unknown';
-            const subjectUrl = convertApiUrlToBrowserUrl(notification?.subject?.url || notification?.url || '');
-            // Build the notification message (plain text, no special formatting)
-            const prefix = notifications.length > 1 ? `${index + 1}. ` : '';
-            const lines = [
-                `${prefix}${subjectType}(${reason}): ${subjectTitle} `,
-                subjectUrl ? `   URL: ${subjectUrl}` : null,
-                repoUrl ? `   Repository: ${repoUrl}` : null,
-                `   Date: ${formatDate(updatedAt)}`
-            ];
-            return lines.filter(Boolean).join('\n');
-        }
-        catch {
-            // If any error occurs processing this notification, return a safe fallback
-            return `${index + 1}. Error processing notification`;
-        }
-    })
-        .join('\n\n');
-    return header + formattedNotifications;
-};
-
-/**
- * Returns an emoji based on the notification subject type.
- *
- * @param type - The subject type (e.g., 'Issue', 'PullRequest', 'Release')
- * @returns An emoji representing the type
- */
-const getTypeEmoji = (type) => {
-    const emojiMap = {
-        Issue: '🐛',
-        PullRequest: '🔀',
-        Release: '🚀',
-        Commit: '💾',
-        Discussion: '💬',
-        CheckSuite: '✅',
-        RepositoryVulnerabilityAlert: '🔒'
-    };
-    return emojiMap[type] || '📄';
-};
-
-/**
- * Formats an array of GitHub notifications into a Slack-style message.
- *
- * @param notifications - Array of GitHub notifications to format
- * @returns A formatted string message for Slack
- */
-const formatNotificationSlack = (notifications) => {
-    const hasMultiple = notifications.length > 1;
-    const header = hasMultiple
-        ? `📬 *GitHub Notifications* (${notifications.length})\n\n`
-        : '';
-    const formattedNotifications = notifications
-        .map((notification, index) => {
-        try {
-            // Safely extract values with fallbacks
-            const repoFullName = notification?.repository?.full_name || 'Unknown Repository';
-            const repoUrl = convertApiUrlToBrowserUrl(notification?.repository?.url || '');
-            const reason = notification?.reason || 'unknown';
-            const updatedAt = notification?.updated_at || 'N/A';
-            const subjectTitle = notification?.subject?.title || 'No title';
-            const subjectType = notification?.subject?.type || 'Unknown';
-            const subjectUrl = convertApiUrlToBrowserUrl(notification?.subject?.url || notification?.url || '');
-            // Format the repository link (Slack style)
-            const repoLink = repoUrl ? `<${repoUrl}|${repoFullName}>` : repoFullName;
-            // Format the subject link (Slack style)
-            const subjectLink = subjectUrl
-                ? `<${subjectUrl}|${subjectTitle}>`
-                : subjectTitle;
-            // Get emoji based on subject type
-            const typeEmoji = getTypeEmoji(subjectType);
-            // Build the notification message with proper Slack formatting
-            // Using separate lines with clear visual separation
-            const prefix = hasMultiple ? `${index + 1}. ` : '';
-            const lines = [
-                `${prefix}${typeEmoji} *${subjectLink}*`,
-                `    📂 Repository: ${repoLink}`,
-                `    📌 Type: ${subjectType}`,
-                `    🔔 Reason: ${reason}`,
-                `    🕒 Updated: ${formatDate(updatedAt)}`
-            ];
-            return lines.join('\n');
-        }
-        catch {
-            // If any error occurs processing this notification, return a safe fallback
-            const prefix = hasMultiple ? `${index + 1}. ` : '';
-            return `${prefix}⚠️ Error processing notification`;
-        }
-    })
-        .join('\n\n');
-    return header + formattedNotifications;
+const formatSingleNotification = (notification, style = 'slack') => {
+    const reason = notification?.reason || 'unknown';
+    const reasonPhrase = getReasonPhrase(reason);
+    const subjectType = notification?.subject?.type || 'Unknown';
+    const subjectTitle = notification?.subject?.title || 'No title';
+    const subjectUrl = convertApiUrlToBrowserUrl(notification?.subject?.url || notification?.url || '');
+    const updatedAt = notification?.updated_at || 'N/A';
+    if (style === 'slack') {
+        const repoFullName = notification?.repository?.full_name || 'Unknown Repository';
+        const subjectLink = subjectUrl
+            ? `<${subjectUrl}|${subjectTitle}>`
+            : subjectTitle;
+        return `${reasonPhrase} ${subjectType} *${subjectLink}* (${repoFullName}) on ${formatDate(updatedAt)}`;
+    }
+    else {
+        return `${reasonPhrase} ${subjectType}: "${subjectTitle}" on ${formatDate(updatedAt)} (URL: ${subjectUrl})`;
+    }
 };
 
 /**
@@ -88458,10 +88406,30 @@ const prepareMessage = (notifications, style = 'slack') => {
     if (!notifications || notifications.length === 0) {
         return 'No notifications found.';
     }
-    if (style === 'slack') {
-        return formatNotificationSlack(notifications);
+    if (notifications.length === 1) {
+        try {
+            return formatSingleNotification(notifications[0], style);
+        }
+        catch {
+            return '⚠️ Error processing notification';
+        }
     }
-    return formatNotificationRaw(notifications);
+    // Multiple notifications: full details with header
+    let header = `📬 *GitHub Notifications* (${notifications.length})\n\n`;
+    if (style === 'raw') {
+        header = `GitHub Notifications (${notifications.length}):\n\n`;
+    }
+    const formattedNotifications = notifications
+        .map((notification, index) => {
+        try {
+            return `${index + 1}. ${formatSingleNotification(notification, style)}`;
+        }
+        catch {
+            return `${index + 1}. ⚠️ Error processing notification`;
+        }
+    })
+        .join('\n\n');
+    return header + formattedNotifications;
 };
 
 /**
@@ -88480,14 +88448,20 @@ async function run() {
         const inputApplyActionToExcluded = getInput('apply_action_to_excluded') === 'true';
         // Simple API call to ensure the provided token is valid and display the associated username
         await getConnectedUser({ githubToken: inputGithubToken });
-        // Retrieve the raw list of notifications from GitHub based on the provided reasons
+        // Retrieve the raw list of notifications from GitHub
         let notifications = await getNotifications({
             githubToken: inputGithubToken
         });
-        const filteredNotifications = notifications.filter((notification) => inputReasons
-            .split(',')
-            .map((reason) => reason.trim())
-            .includes(notification.reason));
+        let filteredNotifications = [];
+        if (inputReasons !== 'all') {
+            filteredNotifications = notifications.filter((notification) => inputReasons
+                .split(',')
+                .map((reason) => reason.trim())
+                .includes(notification.reason));
+        }
+        else {
+            filteredNotifications = notifications;
+        }
         info(`Fetched a total of ${filteredNotifications.length} notifications from GitHub after filtering by reasons: ${inputReasons
             .split(',')
             .map((reason) => reason.trim())
