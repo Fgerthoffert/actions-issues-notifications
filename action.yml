@@ -20,6 +20,13 @@ inputs:
       for the full list of reasons. Use 'all' to include all reasons.
     default: 'mention,assign'
     required: false
+  types:
+    description:
+      Comma-separated list of subjecttypes to filter by (e.g., Issue, ...). See
+      https://docs.github.com/en/rest/activity/notifications?apiVersion=2022-11-28#about-github-notifications
+      . Use 'all' to include all types.
+    default: 'Issue'
+    required: false
   message_style:
     description:
       The style of the formatted message output. Use 'slack' for

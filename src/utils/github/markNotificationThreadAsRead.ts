@@ -20,7 +20,7 @@ export const markNotificationThreadAsRead = async ({
   })
 
   core.info(
-    `Marked notification thread "${notification.subject?.title || 'No title'}" (ID: ${notification.id}) as done on GitHub`
+    `Marked notification thread "${notification.subject?.title || 'No title'}" (ID: ${notification.id}, reason: ${notification.reason}, type: ${notification.subject?.type || 'Unknown'}) as read on GitHub`
   )
 
   return

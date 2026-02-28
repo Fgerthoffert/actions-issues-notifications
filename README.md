@@ -101,6 +101,7 @@ notification_action: 'done' # Mark as done after processing
 | -------------------------- | ------------------------------------------------------------------------------------------------------------------ | -------- | ---------------- |
 | `github_token`             | GitHub token with notifications read access                                                                        | Yes      | -                |
 | `reasons`                  | Comma-separated list of notification reasons to filter (e.g., `mention,assign`)                                    | No       | `mention,assign` |
+| `types`                    | Comma-separated list of notification subject types to filter (e.g., `Issue,PullRequest`)                           | No       | `Issue`          |
 | `message_style`            | Output format: `slack` for Slack-compatible formatting with emojis and links, or `raw` for plain text              | No       | `slack`          |
 | `max_notifications`        | Maximum number of notifications to include. Set to `0` for unlimited                                               | No       | `0`              |
 | `notification_action`      | Action to perform on processed notifications: `none` (do nothing), `read` (mark as read), or `done` (mark done)    | No       | `none`           |
@@ -210,6 +211,7 @@ jobs:
           github_token: ${{ secrets.NOTIFICATIONS_GITHUB_TOKEN }}
           reasons: 'mention,assign'
           message_style: 'slack'
+          max_notifications: '1'
           notification_action: 'done'
 
       - name: Send to Slack
@@ -225,9 +227,8 @@ jobs:
             }
 ```
 
-> **Important**: Replace `YOUR_DEFAULT_CHANNEL_ID` with your actual Slack
-> channel ID (e.g., `C01234567`) or user ID for direct messages (e.g.,
-> `U01234567`).
+> **Important**: Replace `CHANNEL_ID` with your actual Slack channel ID (e.g.,
+> `C01234567`) or user ID for direct messages (e.g., `U01234567`).
 
 ## Example Workflows
 
