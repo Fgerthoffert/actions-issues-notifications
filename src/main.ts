@@ -17,6 +17,7 @@ export async function run(): Promise<void> {
   try {
     const inputGithubToken = core.getInput('github_token')
     const inputReasons = core.getInput('reasons')
+    const inputTypes = core.getInput('types')
     const inputMessageStyle = core.getInput('message_style') as MessageStyle
     const inputMaxNotifications = parseInt(
       core.getInput('max_notifications') || '0',
@@ -51,10 +52,23 @@ export async function run(): Promise<void> {
     } else {
       filteredNotifications = notifications
     }
+
+    if (inputTypes !== 'all') {
+      filteredNotifications = filteredNotifications.filter((notification) =>
+        inputTypes
+          .split(',')
+          .map((type) => type.trim())
+          .includes(notification.subject.type)
+      )
+    }
+
     core.info(
       `Fetched a total of ${filteredNotifications.length} notifications from GitHub after filtering by reasons: ${inputReasons
         .split(',')
         .map((reason) => reason.trim())
+        .join(', ')} and types: ${inputTypes
+        .split(',')
+        .map((type) => type.trim())
         .join(', ')}`
     )
 
@@ -63,12 +77,15 @@ export async function run(): Promise<void> {
     // To avoid the notifications from cluttering the user's inbox, we can optionally
     //  apply the configured action (mark as read or done) to the excluded notifications as well.
     if (inputApplyActionToExcluded) {
-      core.info('Applying action to excluded notifications...')
       // Get the list of all notifications that are not included in the filtered list
       const excludedNotifications = notifications.filter(
         (notification) =>
           !filteredNotifications.some((n) => n.id === notification.id)
       )
+      core.info(
+        `Setting ${excludedNotifications.length} excluded notification(s) (not covered by filters) as done or read as per configuration...`
+      )
+
       for (const notification of excludedNotifications) {
         if (
           inputMaxNotificationsAction > 0 &&

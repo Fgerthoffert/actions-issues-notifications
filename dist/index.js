@@ -88258,6 +88258,7 @@ const getNotifications = async ({ githubToken }) => {
         }
     });
     info(`Fetched a total of ${notifications.length} notifications from GitHub`);
+    info(JSON.stringify(notifications, null, 2));
     return notifications;
 };
 
@@ -88269,7 +88270,7 @@ const markNotificationThreadAsDone = async ({ githubToken, notification }) => {
             'X-GitHub-Api-Version': '2022-11-28'
         }
     });
-    info(`Marked notification thread "${notification.subject?.title || 'No title'}" (ID: ${notification.id}) as done on GitHub`);
+    info(`Marked notification thread "${notification.subject?.title || 'No title'}" (ID: ${notification.id}, reason: ${notification.reason}, type: ${notification.subject?.type || 'Unknown'}) as done on GitHub`);
     return;
 };
 
@@ -88281,7 +88282,7 @@ const markNotificationThreadAsRead = async ({ githubToken, notification }) => {
             'X-GitHub-Api-Version': '2022-11-28'
         }
     });
-    info(`Marked notification thread "${notification.subject?.title || 'No title'}" (ID: ${notification.id}) as done on GitHub`);
+    info(`Marked notification thread "${notification.subject?.title || 'No title'}" (ID: ${notification.id}, reason: ${notification.reason}, type: ${notification.subject?.type || 'Unknown'}) as read on GitHub`);
     return;
 };
 
@@ -88441,6 +88442,7 @@ async function run() {
     try {
         const inputGithubToken = getInput('github_token');
         const inputReasons = getInput('reasons');
+        const inputTypes = getInput('types');
         const inputMessageStyle = getInput('message_style');
         const inputMaxNotifications = parseInt(getInput('max_notifications') || '0', 10);
         const inputNotificationAction = getInput('notification_action');
@@ -88462,17 +88464,26 @@ async function run() {
         else {
             filteredNotifications = notifications;
         }
+        if (inputTypes !== 'all') {
+            filteredNotifications = filteredNotifications.filter((notification) => inputTypes
+                .split(',')
+                .map((type) => type.trim())
+                .includes(notification.subject.type));
+        }
         info(`Fetched a total of ${filteredNotifications.length} notifications from GitHub after filtering by reasons: ${inputReasons
             .split(',')
             .map((reason) => reason.trim())
+            .join(', ')} and types: ${inputTypes
+            .split(',')
+            .map((type) => type.trim())
             .join(', ')}`);
         let notificationsActionsCount = 0;
         // To avoid the notifications from cluttering the user's inbox, we can optionally
         //  apply the configured action (mark as read or done) to the excluded notifications as well.
         if (inputApplyActionToExcluded) {
-            info('Applying action to excluded notifications...');
             // Get the list of all notifications that are not included in the filtered list
             const excludedNotifications = notifications.filter((notification) => !filteredNotifications.some((n) => n.id === notification.id));
+            info(`Setting ${excludedNotifications.length} excluded notification(s) (not covered by filters) as done or read as per configuration...`);
             for (const notification of excludedNotifications) {
                 if (inputMaxNotificationsAction > 0 &&
                     notificationsActionsCount >= inputMaxNotificationsAction) {
