@@ -28037,6 +28037,13 @@ function setFailed(message) {
     error(message);
 }
 /**
+ * Writes debug message to user log
+ * @param message debug message
+ */
+function debug(message) {
+    issueCommand('debug', {}, message);
+}
+/**
  * Adds an error issue
  * @param message error issue message. Errors will be converted to string via toString()
  * @param properties optional properties to add to the annotation.
@@ -88258,7 +88265,7 @@ const getNotifications = async ({ githubToken }) => {
         }
     });
     info(`Fetched a total of ${notifications.length} notifications from GitHub`);
-    info(JSON.stringify(notifications, null, 2));
+    debug(JSON.stringify(notifications, null, 2));
     return notifications;
 };
 

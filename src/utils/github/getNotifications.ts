@@ -27,7 +27,7 @@ export const getNotifications = async ({
     `Fetched a total of ${notifications.length} notifications from GitHub`
   )
 
-  core.info(JSON.stringify(notifications, null, 2))
+  core.debug(JSON.stringify(notifications, null, 2))
 
   return notifications as unknown as GitHubNotification[]
 }
