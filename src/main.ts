@@ -41,6 +41,21 @@ export async function run(): Promise<void> {
       githubToken: inputGithubToken
     })
 
+    core.debug(
+      `All notifications: ${JSON.stringify(
+        notifications.map((n) => {
+          return {
+            id: n.id,
+            reason: n.reason,
+            type: n.subject?.type || 'Unknown',
+            title: n.subject?.title || 'No title'
+          }
+        }),
+        null,
+        2
+      )}`
+    )
+
     let filteredNotifications = []
     if (inputReasons !== 'all') {
       filteredNotifications = notifications.filter((notification) =>
@@ -72,6 +87,21 @@ export async function run(): Promise<void> {
         .join(', ')}`
     )
 
+    core.debug(
+      `Filtered notifications: ${JSON.stringify(
+        filteredNotifications.map((n) => {
+          return {
+            id: n.id,
+            reason: n.reason,
+            type: n.subject?.type || 'Unknown',
+            title: n.subject?.title || 'No title'
+          }
+        }),
+        null,
+        2
+      )}`
+    )
+
     let notificationsActionsCount = 0
 
     // To avoid the notifications from cluttering the user's inbox, we can optionally
@@ -84,6 +114,21 @@ export async function run(): Promise<void> {
       )
       core.info(
         `Setting ${excludedNotifications.length} excluded notification(s) (not covered by filters) as done or read as per configuration...`
+      )
+
+      core.debug(
+        `Excluded notifications: ${JSON.stringify(
+          excludedNotifications.map((n) => {
+            return {
+              id: n.id,
+              reason: n.reason,
+              type: n.subject?.type || 'Unknown',
+              title: n.subject?.title || 'No title'
+            }
+          }),
+          null,
+          2
+        )}`
       )
 
       for (const notification of excludedNotifications) {
