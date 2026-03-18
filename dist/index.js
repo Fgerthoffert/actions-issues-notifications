@@ -88461,6 +88461,14 @@ async function run() {
         let notifications = await getNotifications({
             githubToken: inputGithubToken
         });
+        debug(`All notifications: ${JSON.stringify(notifications.map((n) => {
+            return {
+                id: n.id,
+                reason: n.reason,
+                type: n.subject?.type || 'Unknown',
+                title: n.subject?.title || 'No title'
+            };
+        }), null, 2)}`);
         let filteredNotifications = [];
         if (inputReasons !== 'all') {
             filteredNotifications = notifications.filter((notification) => inputReasons
@@ -88484,6 +88492,14 @@ async function run() {
             .split(',')
             .map((type) => type.trim())
             .join(', ')}`);
+        debug(`Filtered notifications: ${JSON.stringify(filteredNotifications.map((n) => {
+            return {
+                id: n.id,
+                reason: n.reason,
+                type: n.subject?.type || 'Unknown',
+                title: n.subject?.title || 'No title'
+            };
+        }), null, 2)}`);
         let notificationsActionsCount = 0;
         // To avoid the notifications from cluttering the user's inbox, we can optionally
         //  apply the configured action (mark as read or done) to the excluded notifications as well.
@@ -88491,6 +88507,14 @@ async function run() {
             // Get the list of all notifications that are not included in the filtered list
             const excludedNotifications = notifications.filter((notification) => !filteredNotifications.some((n) => n.id === notification.id));
             info(`Setting ${excludedNotifications.length} excluded notification(s) (not covered by filters) as done or read as per configuration...`);
+            debug(`Excluded notifications: ${JSON.stringify(excludedNotifications.map((n) => {
+                return {
+                    id: n.id,
+                    reason: n.reason,
+                    type: n.subject?.type || 'Unknown',
+                    title: n.subject?.title || 'No title'
+                };
+            }), null, 2)}`);
             for (const notification of excludedNotifications) {
                 if (inputMaxNotificationsAction > 0 &&
                     notificationsActionsCount >= inputMaxNotificationsAction) {
